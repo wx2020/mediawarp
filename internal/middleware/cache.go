@@ -13,9 +13,9 @@ import (
 )
 
 type CacheData struct {
-	StatusCode int         // code 响应码
-	Header     http.Header // header 响应头信息
-	Body       []byte      // body 响应体
+	StatusCode int            // code 响应码
+	Header     map[string]string // header 响应头信息（简化为map[string]string，只保留第一个值）
+	Body       []byte         // body 响应体
 }
 
 func (c *CacheData) Json() ([]byte, error) {
@@ -24,10 +24,8 @@ func (c *CacheData) Json() ([]byte, error) {
 
 func (c *CacheData) WriteResponse(ctx *gin.Context) {
 	ctx.Status(c.StatusCode)            // 设置响应码
-	for key, values := range c.Header { // 设置响应头
-		for _, value := range values {
-			ctx.Writer.Header().Add(key, value)
-		}
+	for key, value := range c.Header { // 设置响应头（简化版，只设置第一个值）
+		ctx.Writer.Header().Set(key, value)
 	}
 	ctx.Writer.Write(c.Body) // 设置响应体
 }
@@ -163,10 +161,37 @@ func getCacheBaseFunc(cachePool *bigcache.BigCache, cacheName string, reg string
 
 		code := ctx.Writer.Status()
 		if code >= http.StatusOK && code < http.StatusMultipleChoices { // 响应是2xx的成功响应，更新缓存记录
+			bodyBytes := writer.Body.Bytes()
+
+			// 内存优化：超过256KB的内容不缓存
+			const maxCacheSize = 256 * 1024
+			if len(bodyBytes) > maxCacheSize {
+				logging.AccessDebugf(ctx, "响应体大小 %d 字节超过缓存限制 %d 字节，跳过缓存", len(bodyBytes), maxCacheSize)
+				return
+			}
+
+			// 简化Header，只保留必要的响应头
+			header := make(map[string]string, 5)
+			if ct := ctx.Writer.Header().Get("Content-Type"); ct != "" {
+				header["Content-Type"] = ct
+			}
+			if cl := ctx.Writer.Header().Get("Content-Length"); cl != "" {
+				header["Content-Length"] = cl
+			}
+			if cc := ctx.Writer.Header().Get("Cache-Control"); cc != "" {
+				header["Cache-Control"] = cc
+			}
+			if etag := ctx.Writer.Header().Get("ETag"); etag != "" {
+				header["ETag"] = etag
+			}
+			if cd := ctx.Writer.Header().Get("Content-Disposition"); cd != "" {
+				header["Content-Disposition"] = cd
+			}
+
 			cacheData := &CacheData{ // 创建缓存数据
-				StatusCode: code, //ctx.Request.Response.StatusCode,
-				Header:     ctx.Writer.Header().Clone(),
-				Body:       writer.Body.Bytes(),
+				StatusCode: code,
+				Header:     header,
+				Body:       bodyBytes,
 			}
 
 			if cacheByte, err := cacheData.Json(); err == nil {

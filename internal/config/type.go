@@ -41,6 +41,10 @@ type CacheSetting struct {
 	AlistAPITTL time.Duration `yaml:"alist_api_ttl"`
 	ImageTTL    time.Duration `yaml:"image_ttl"`
 	SubtitleTTL time.Duration `yaml:"subtitle_ttl"`
+	// 内存优化配置
+	MaxMemoryMB      int    `yaml:"max_memory_mb"`       // 缓存最大内存占用(MB)，0表示不限制
+	Shards           int    `yaml:"shards"`              // 分片数，默认为1024
+	MaxEntriesPerShard int   `yaml:"max_entries_per_shard"` // 每个分片最大条目数，默认1000
 }
 
 // Web前端自定义设置

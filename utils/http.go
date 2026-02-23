@@ -18,13 +18,14 @@ func IsURLEncoded(u string) bool {
 	return url.QueryEscape(unescaped) == u
 }
 
-// 创建优化配置的 HTTP 客户端
+// 创建优化配置的 HTTP 客户端（内存优化版本）
 func createOptimizedClient() *http.Client {
 	transport := &http.Transport{
-		// 连接池配置
-		MaxIdleConns:        runtime.NumCPU() * 80, // 全局最大空闲连接
-		MaxIdleConnsPerHost: runtime.NumCPU() * 5,  // 每个主机最大空闲连接
-		IdleConnTimeout:     90 * time.Second,      // 空闲连接超时时间
+		// 连接池配置 - 大幅降低以减少内存占用
+		MaxIdleConns:        runtime.NumCPU() * 4,  // 全局最大空闲连接（从80降至4）
+		MaxIdleConnsPerHost: runtime.NumCPU() * 2,  // 每个主机最大空闲连接（从5降至2）
+		MaxConnsPerHost:     runtime.NumCPU() * 6,  // 每个主机最大连接数限制
+		IdleConnTimeout:     30 * time.Second,      // 空闲连接超时时间（从90s降至30s）
 
 		// 连接复用优化
 		DisableKeepAlives: false, // 启用 Keep-Alive
@@ -32,21 +33,25 @@ func createOptimizedClient() *http.Client {
 
 		// 连接建立优化
 		DialContext: (&net.Dialer{
-			Timeout:   5 * time.Second,  // 连接超时
-			KeepAlive: 30 * time.Second, // Keep-Alive 周期
+			Timeout:   3 * time.Second,  // 连接超时（从5s降至3s）
+			KeepAlive: 15 * time.Second, // Keep-Alive 周期（从30s降至15s）
 		}).DialContext,
 
 		// TLS 配置
-		TLSHandshakeTimeout: 5 * time.Second, // TLS 握手超时
+		TLSHandshakeTimeout: 3 * time.Second, // TLS 握手超时（从5s降至3s）
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: false, // 生产环境应为 false
 			MinVersion:         tls.VersionTLS12,
 		},
+
+		// 内存优化：限制响应头大小
+		WriteBufferSize: 4 * 1024,  // 写缓冲区4KB
+		ReadBufferSize:  4 * 1024,  // 读缓冲区4KB
 	}
 
 	return &http.Client{
 		Transport: transport,
-		Timeout:   30 * time.Second, // 整个请求超时
+		Timeout:   15 * time.Second, // 整个请求超时（从30s降至15s）
 	}
 }
 

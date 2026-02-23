@@ -3,7 +3,6 @@ package alist
 import (
 	"MediaWarp/internal/config"
 	"MediaWarp/utils"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -49,7 +48,7 @@ func NewAlistClient(addr string, username string, password string, token *string
 	}
 
 	if config.Cache.Enable && config.Cache.AlistAPITTL > 0 {
-		cache, err := bigcache.New(context.Background(), bigcache.DefaultConfig(config.Cache.AlistAPITTL))
+		cache, err := config.CreateOptimizedCache(config.Cache.AlistAPITTL)
 		if err == nil {
 			client.cache = cache
 		} else {

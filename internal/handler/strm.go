@@ -5,7 +5,6 @@ import (
 	"MediaWarp/internal/logging"
 	"MediaWarp/internal/service"
 	"MediaWarp/internal/service/alist"
-	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -23,7 +22,7 @@ func getHTTPStrmHandler() (StrmHandlerFunc, error) {
 	var cache *bigcache.BigCache
 	if config.Cache.Enable && config.Cache.HTTPStrmTTL > 0 && config.HTTPStrm.FinalURL {
 		var err error
-		cache, err = bigcache.New(context.Background(), bigcache.DefaultConfig(config.Cache.HTTPStrmTTL))
+		cache, err = config.CreateOptimizedCache(config.Cache.HTTPStrmTTL)
 		if err != nil {
 			return nil, fmt.Errorf("创建 HTTPStrm 缓存失败: %w", err)
 		}

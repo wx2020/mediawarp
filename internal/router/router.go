@@ -6,7 +6,6 @@ import (
 	"MediaWarp/internal/handler"
 	"MediaWarp/internal/logging"
 	"MediaWarp/internal/middleware"
-	"MediaWarp/static"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -33,9 +32,13 @@ func InitRouter() *gin.Engine {
 			ctx.JSON(http.StatusOK, config.Version())
 		})
 		if config.Web.Enable { // 启用 Web 页面修改相关设置
-			mediawarpRouter.StaticFS("/static", http.FS(static.EmbeddedStaticAssets))
 			if config.Web.Custom { // 用户自定义静态资源目录
 				mediawarpRouter.Static("/custom", config.CostomDir())
+				logging.Info("使用自定义静态资源目录: ", config.CostomDir())
+			} else {
+				// 当没有自定义目录且没有内嵌资源时，提示用户
+				logging.Info("Web功能已启用，但未配置自定义静态资源目录。")
+				logging.Info("如需使用Web美化功能（如actor-plus、emby-swiper等），请在config.yaml中设置 web.custom: true 并提供自定义资源目录。")
 			}
 			if config.Web.Robots != "" { // 自定义 robots.txt
 				ginR.GET(

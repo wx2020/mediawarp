@@ -1,18 +1,17 @@
 package middleware
 
 import (
-	"context"
+	"MediaWarp/internal/config"
 	"fmt"
 	"net/http"
 	"regexp"
 	"time"
 
-	"github.com/allegro/bigcache/v3"
 	"github.com/gin-gonic/gin"
 )
 
 func SubtitleCache(ttl time.Duration, reg *regexp.Regexp) gin.HandlerFunc {
-	cachePool, err := bigcache.New(context.Background(), bigcache.DefaultConfig(ttl))
+	cachePool, err := config.CreateOptimizedCache(ttl)
 	if err != nil {
 		panic(fmt.Sprintf("create subtitle cache pool failed: %v", err))
 	}
