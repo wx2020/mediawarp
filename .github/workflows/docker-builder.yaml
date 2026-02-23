@@ -33,7 +33,6 @@ jobs:
       - name: Clone Repository
         uses: actions/checkout@v4
         with:
-          submodules: true
           fetch-depth: 0
 
       - name: Docker Meta
