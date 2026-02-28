@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -47,6 +48,20 @@ func NewEmbyServerHandler(addr string, apiKey string) (*EmbyHandler, error) {
 		return nil, err
 	}
 	handler.proxy = httputil.NewSingleHostReverseProxy(target)
+
+	// 配置自定义 Transport，增加超时时间以避免临时性超时
+	handler.proxy.Transport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second, // 连接超时
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		ResponseHeaderTimeout: 60 * time.Second, // 响应头超时
+	}
 
 	// 设置自定义错误处理器，提供更友好的错误信息
 	handler.proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
