@@ -5,11 +5,9 @@ ENV GO111MODULE=on \
 
 WORKDIR /builder
 COPY . .
+ARG MEDIAWARP_VERSION=dev
 RUN go mod download && \
-    go build -ldflags " \
-    -s -w \
-    -X MediaWarp/internal/config.commitHash=$(git rev-parse HEAD) \
-    -X MediaWarp/internal/config.buildDate=$(date -u '+%Y-%m-%d %H:%M:%S')" \
+    go build -ldflags="-s -w -X MediaWarp/internal/config.appVersion=${MEDIAWARP_VERSION}" \
     -o MediaWarp
 
 FROM alpine:latest
