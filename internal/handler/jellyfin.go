@@ -41,6 +41,14 @@ func NewJellyfinHandler(addr string, apiKey string) (*JellyfinHandler, error) {
 	}
 	handler.proxy = httputil.NewSingleHostReverseProxy(target)
 
+	// 设置自定义错误处理器，提供更友好的错误信息
+	handler.proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		logging.Errorf("代理请求失败: %s %s - %v", r.Method, r.URL.Path, err)
+		// 返回 502 Bad Gateway 错误，附带详细错误信息
+		w.WriteHeader(http.StatusBadGateway)
+		w.Write([]byte(`{"error": "无法连接到上游服务器，请稍后重试"}`))
+	}
+
 	{ // 初始化路由规则
 		handler.routerRules = []RegexpRouteRule{
 			{
