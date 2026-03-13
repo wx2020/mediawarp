@@ -52,36 +52,6 @@ func InitRouter() *gin.Engine {
 	}
 
 	handlers := make(gin.HandlersChain, 0, 3)
-	if config.Cache.Enable {
-		mediaServerHandler := handler.GetMediaServer()
-		{
-			if config.Cache.ImageTTL > 0 {
-				if mediaServerHandler.GetImageCacheRegexp() != nil {
-					logging.Infof("图片缓存中间件已启用, TTL: %s", config.Cache.ImageTTL.String())
-					handlers = append(handlers, middleware.ImageCache(config.Cache.ImageTTL, mediaServerHandler.GetImageCacheRegexp()))
-				} else {
-					logging.Warningf("媒体服务器 %s 不支持图片缓存, 未添加图片缓存中间件", config.MediaServer.Type.String())
-				}
-			} else {
-				logging.Infof("图片缓存中间件未启用, TTL: %s", config.Cache.ImageTTL.String())
-			}
-		}
-
-		{
-			if config.Cache.SubtitleTTL > 0 {
-				if mediaServerHandler.GetSubtitleCacheRegexp() != nil {
-					logging.Infof("字幕缓存中间件已启用, TTL: %s", config.Cache.SubtitleTTL.String())
-					handlers = append(handlers, middleware.SubtitleCache(config.Cache.SubtitleTTL, mediaServerHandler.GetSubtitleCacheRegexp()))
-				} else {
-					logging.Warningf("媒体服务器 %s 不支持字幕缓存, 未添加字幕缓存中间件", config.MediaServer.Type.String())
-				}
-			} else {
-				logging.Infof("字幕缓存中间件未启用, TTL: %s", config.Cache.SubtitleTTL.String())
-			}
-		}
-	} else {
-		logging.Info("全局缓存未启用, 未添加缓存中间件")
-	}
 
 	handlers = append(handlers, getRegexpRouterHandler())
 	ginR.NoRoute(handlers...)

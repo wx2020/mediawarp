@@ -29,7 +29,6 @@ type AlistClient struct {
 
 	token  alistToken
 	client *http.Client
-	cache  *bigcache.BigCache
 }
 
 // 获得AlistClient实例
@@ -40,29 +39,20 @@ func NewAlistClient(addr string, username string, password string, token *string
 		password: password,
 		client:   utils.GetHTTPClient(),
 	}
-	if token != nil {
-		client.token = alistToken{
-			value:    *token,
-			expireAt: time.Time{},
+		if token != nil {
+			client.token = alistToken{
+				value:    *token,
+				expireAt: time.Time{},
+			}
 		}
-	}
 
-	if config.Cache.Enable && config.Cache.AlistAPITTL > 0 {
-		cache, err := config.CreateOptimizedCache(config.Cache.AlistAPITTL)
-		if err == nil {
-			client.cache = cache
-		} else {
-			return nil, fmt.Errorf("创建 Alist API 缓存失败: %w", err)
+		userInfo, err := client.Me()
+		if err != nil {
+			return nil, fmt.Errorf("获取用户当前信息失败：%w", err)
 		}
-	}
+		client.userInfo = *userInfo
 
-	userInfo, err := client.Me()
-	if err != nil {
-		return nil, fmt.Errorf("获取用户当前信息失败：%w", err)
-	}
-	client.userInfo = *userInfo
-
-	return &client, nil
+		return &client, nil
 }
 
 // 得到服务器入口
@@ -112,14 +102,6 @@ func (client *AlistClient) getToken() (string, error) {
 
 func doRequest[T any](client *AlistClient, r Request) (*T, error) {
 	var resp AlistResponse[T]
-	cacheKey := r.GetCacheKey()
-	if cacheKey != "" && client.cache != nil {
-		if data, err := client.cache.Get(cacheKey); err == nil {
-			if json.Unmarshal(data, &resp) == nil {
-				return &resp.Data, nil
-			}
-		}
-	}
 
 	req := newHTTPReq(client.GetEndpoint(), r)
 	req.Header.Set("Accept", "application/json")
@@ -150,13 +132,6 @@ func doRequest[T any](client *AlistClient, r Request) (*T, error) {
 
 	if resp.Code != http.StatusOK {
 		return nil, fmt.Errorf("请求失败，HTTP 状态码: %d, 响应状态码: %d, 响应信息: %s", res.StatusCode, resp.Code, resp.Message)
-	}
-
-	if cacheKey != "" && client.cache != nil {
-		err = client.cache.Set(cacheKey, data)
-		if err != nil {
-			return nil, fmt.Errorf("缓存响应体失败: %w", err)
-		}
 	}
 
 	return &resp.Data, nil

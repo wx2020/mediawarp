@@ -23,7 +23,6 @@ var (
 	Port         uint16              // MediaWarp开放端口
 	MediaServer  MediaServerSetting  // 上游媒体服务器设置
 	Logger       LoggerSetting       // 日志设置
-	Cache        CacheSetting        // 缓存设置
 	Web          WebSetting          // Web服务器设置
 	ClientFilter ClientFilterSetting // 客户端过滤设置
 	HTTPStrm     HTTPStrmSetting     // HTTPSTRM设置
@@ -112,7 +111,6 @@ func loadConfig(path string) error {
 	Port = s.Port
 	MediaServer = s.MediaServer
 	Logger = s.Logger
-	Cache = s.Cache
 	Web = s.Web
 	ClientFilter = s.ClientFilter
 	HTTPStrm = s.HTTPStrm
