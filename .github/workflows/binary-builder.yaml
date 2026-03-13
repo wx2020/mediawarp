@@ -1,6 +1,7 @@
 name: MediaWarp Binary Builder
 
 on:
+  workflow_dispatch:
   workflow_call:
     inputs:
       APP_VERSION:
