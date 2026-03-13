@@ -1,7 +1,6 @@
 package alist
 
 import (
-	"MediaWarp/internal/config"
 	"MediaWarp/utils"
 	"encoding/json"
 	"fmt"
