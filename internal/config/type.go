@@ -2,7 +2,6 @@ package config
 
 import (
 	"MediaWarp/constants"
-	"time"
 )
 
 // 程序版本信息
