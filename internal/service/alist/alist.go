@@ -11,8 +11,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/allegro/bigcache/v3"
 )
 
 type alistToken struct {
