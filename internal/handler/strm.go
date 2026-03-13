@@ -40,7 +40,6 @@ func getHTTPStrmHandler() (StrmHandlerFunc, error) {
 		}
 	}, nil
 }
-}
 
 type resolutionInfo struct {
 	width  uint
